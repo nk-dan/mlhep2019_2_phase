@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.nn.utils import spectral_norm
+
 NOISE_DIM = 10
 
 class ModelGConvTranspose(nn.Module):
