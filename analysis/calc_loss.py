@@ -39,7 +39,7 @@ class GANLosses(object):
         if self.GP == 'local-two-sided':
             N = 10
 
-            noise_y = torch.normal(0, N, size=inp_data.shape).to(self.device)
+            noise_y = torch.distributions.Normal(0, N).sample(inp_data.shape).to(self.device)
 
             perturbed_y = (inp_data + noise_y).to(self.device)
 
