@@ -39,10 +39,6 @@ def dataset_with_one_particle_type(type_id, EnergyDeposit, ParticleMomentum, Par
 def add_instance_noise(data, std=0.01):
     return data + torch.distributions.Normal(0, std).sample(data.shape).to(device)
 
-def l2_norm(tensor):
-    """Return the l2 norm of a tensor."""
-    return torch.sqrt(1e-8 + torch.sum(tensor**2))
-
 
 def trainer(data_train):
 

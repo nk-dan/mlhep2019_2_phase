@@ -5,6 +5,9 @@ import torch.optim as optim
 import torch.utils.data as utils
 import numpy as np
 
+def l2_norm(tensor):
+    """Return the l2 norm of a tensor."""
+    return torch.sqrt(1e-8 + torch.sum(tensor**2))
 
 class GANLosses(object):
     def __init__(self, task, device, gp = 'local-two-sided'):
