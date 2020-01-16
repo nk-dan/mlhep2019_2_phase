@@ -13,7 +13,23 @@ import torch.utils.data as utils
 import os
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
+MEAN_TRAIN_MOM_POINT = torch.Tensor([-0.08164814, -0.02489864, 20.8446184, -0.01204223,  0.02772552]).to(device)
+STD_TRAIN_MOM_POINT  = torch.Tensor([ 5.4557047,   5.38253167, 24.26102735, 2.69435522,  2.65776869]).to(device)
+GRAD_PENALTY = True
+ZERO_CENTERED_GRAD_PENALTY = False
 
+INSTANCE_NOISE = True
+
+MEAN_TRAIN_MOM   = np.array([-0.08164814, -0.02489864, 20.8446184])
+MEAN_TRAIN_POINT = np.array([-0.01204223,  0.02772552])
+STD_TRAIN_MOM    = np.array([ 5.4557047,   5.38253167, 24.26102735])
+STD_TRAIN_POINT  = np.array([ 2.69435522,  2.65776869])
+
+TASKS = ['KL', 'REVERSED_KL', 'WASSERSTEIN', 'HINGE']
+
+TASK = 'HINGE'
+
+LIPSITZ_WEIGHTS = False
 
 def dataset_with_one_particle_type(type_id, EnergyDeposit, ParticleMomentum, ParticlePoint, PDG):
     ind = [i for i, x in enumerate(PDG) if x == type_id]
@@ -63,30 +79,8 @@ def trainer(data_train):
     std_train_mom   = np.std(data_train['ParticleMomentum'][ind], axis=0)
     std_train_point = np.std(data_train['ParticlePoint'][:,:2][ind], axis=0)
 
-    MEAN_TRAIN_MOM   = np.array([-0.08164814, -0.02489864, 20.8446184])
-    MEAN_TRAIN_POINT = np.array([-0.01204223,  0.02772552])
-    STD_TRAIN_MOM    = np.array([ 5.4557047,   5.38253167, 24.26102735])
-    STD_TRAIN_POINT  = np.array([ 2.69435522,  2.65776869])
 
-    TASKS = ['KL', 'REVERSED_KL', 'WASSERSTEIN', 'HINGE']
-
-    TASK = 'HINGE'
-
-    LIPSITZ_WEIGHTS = False
     clamp_lower, clamp_upper = -0.01, 0.01
-
-    GRAD_PENALTY = True
-    ZERO_CENTERED_GRAD_PENALTY = False
-
-    INSTANCE_NOISE = True
-
-    MEAN_TRAIN_MOM   = np.array([-0.08164814, -0.02489864, 20.8446184])
-    MEAN_TRAIN_POINT = np.array([-0.01204223,  0.02772552])
-    STD_TRAIN_MOM    = np.array([ 5.4557047,   5.38253167, 24.26102735])
-    STD_TRAIN_POINT  = np.array([ 2.69435522,  2.65776869])
-
-    MEAN_TRAIN_MOM_POINT = torch.Tensor([-0.08164814, -0.02489864, 20.8446184, -0.01204223,  0.02772552]).to(device)
-    STD_TRAIN_MOM_POINT  = torch.Tensor([ 5.4557047,   5.38253167, 24.26102735, 2.69435522,  2.65776869]).to(device)
 
     gan_losses = GANLosses(TASK, device)
     discriminator = ModelD().to(device)
