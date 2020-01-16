@@ -108,7 +108,7 @@ def trainer(data_train):
         
         for energy_b, mom_b, point_b, pdg_b in calo_dataloader:
             energy_b, mom_b = energy_b.to(device), mom_b.to(device)
-            point_b,  pdg_b = point_b .to(device), pdg_b.to(device)
+            point_b,  pdg_b = point_b.to(device), pdg_b.to(device)
 
             mom_point_b = torch.cat([mom_b.to(device), point_b.to(device)], dim=1)
                 
