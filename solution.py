@@ -10,73 +10,59 @@ import torch.optim as optim
 import torch.utils.data as utils
 import os
 
-
-def model_prediction(input_file, output_file, generator_cpu, batch_size=1024, shuffle=False):
-    """
-    Model test/validation
-
-        Parameters
-        ----------
-            input_file : str
-                Input file name with path (e.g. data/data_val.npz).
-            
-            output_file : str
-                Output file name with path (e.g. output/data_val_prediction.npz).
-            
-            generator_cpu :
-
-            
-            batch_size : int, optional
-                Number of elements in a dataloader batch.
-            
-            shuffle : bool, optional
-                If to enable shuffling in batches.
-
-        Returns:
-        ----------
-            None
-    """
-    
-    dataset = np.load(input_file, allow_pickle=True)
-    val_data_path_out = output_file
-
-    part_mom_val   = torch.tensor(dataset['ParticleMomentum']).float()
-    part_point_val = torch.tensor(dataset['ParticlePoint'][:, :2]).float()
-    part_mom_point = torch.cat([part_mom_val, part_point_val], dim=1)
-    
-    calo_dataset    = utils.TensorDataset(part_mom_point)
-    calo_dataloader = torch.utils.data.DataLoader(calo_dataset, batch_size=batch_size, shuffle=shuffle)
-
-    with torch.no_grad():
-        EnergyDeposit_val = []
-
-        for part_mom_point_batch in tqdm(calo_dataloader):
-            noise = torch.randn(len(part_mom_point_batch[0]), NOISE_DIM)
-            EnergyDeposit_val_batch = generator_cpu(noise, part_mom_point_batch[0]).detach().numpy()
-            EnergyDeposit_val.append(EnergyDeposit_val_batch)
-        
-        np.savez_compressed(output_file, 
-                            EnergyDeposit=np.concatenate(EnergyDeposit_val, axis=0).reshape(-1, 30, 30))
-
-        del EnergyDeposit_val
-    del dataset; del part_mom_val; del part_point_val; del part_mom_point;
-    del calo_dataset; calo_dataloader
-    return
-
-
 def main():
     input_dir, output_dir = sys.argv[1:]
-        
+    
+    data_val = np.load(input_dir + '/data_val.npz', allow_pickle=True)
+    val_data_path_out = output_dir + '/data_val_prediction.npz'
+
+    data_test = np.load(input_dir + '/data_test.npz', allow_pickle=True)
+    test_data_path_out = output_dir + '/data_test_prediction.npz'
+    
     generator_cpu = ModelGConvTranspose(NOISE_DIM)
     generator_cpu.load_state_dict(torch.load(os.path.dirname(os.path.abspath(__file__)) + '/gan.pt'))
     generator_cpu.eval()
     
-    # Validation
-    model_evaluation(input_dir  + '/data_val.npz' , 
-                     output_dir + '/data_val_prediction.npz', generator_cpu)
-    # Test
-    model_evaluation(input_dir  + '/data_test.npz', 
-                     output_dir + '/data_test_prediction.npz', generator_cpu)
+    # val
+    ParticleMomentum_val = torch.tensor(data_val['ParticleMomentum']).float()
+    ParticlePoint_val = torch.tensor(data_val['ParticlePoint'][:, :2]).float()
+    ParticleMomentum_ParticlePoint_val = torch.cat([ParticleMomentum_val, ParticlePoint_val], dim=1)
+    calo_dataset_val = utils.TensorDataset(ParticleMomentum_ParticlePoint_val)
+    calo_dataloader_val = torch.utils.data.DataLoader(calo_dataset_val, batch_size=1024, shuffle=False)
+
+    with torch.no_grad():
+        EnergyDeposit_val = []
+        for ParticleMomentum_ParticlePoint_val_batch in tqdm(calo_dataloader_val):
+            noise = torch.randn(len(ParticleMomentum_ParticlePoint_val_batch[0]), NOISE_DIM)
+            EnergyDeposit_val_batch = generator_cpu(noise, ParticleMomentum_ParticlePoint_val_batch[0]).detach().numpy()
+            EnergyDeposit_val.append(EnergyDeposit_val_batch)
+        np.savez_compressed(val_data_path_out, 
+                            EnergyDeposit=np.concatenate(EnergyDeposit_val, axis=0).reshape(-1, 30, 30))
+
+        del EnergyDeposit_val
+    del data_val; del ParticleMomentum_val; del ParticlePoint_val; del ParticleMomentum_ParticlePoint_val;
+    del calo_dataset_val; calo_dataloader_val
+    
+    
+    ParticleMomentum_test = torch.tensor(data_test['ParticleMomentum']).float()
+    ParticlePoint_test = torch.tensor(data_test['ParticlePoint'][:, :2]).float()
+    ParticleMomentum_ParticlePoint_test = torch.cat([ParticleMomentum_test, ParticlePoint_test], dim=1)
+    calo_dataset_test = utils.TensorDataset(ParticleMomentum_ParticlePoint_test)
+    calo_dataloader_test = torch.utils.data.DataLoader(calo_dataset_test, batch_size=1024, shuffle=False)
+
+    with torch.no_grad():
+        EnergyDeposit_test = []
+        for ParticleMomentum_ParticlePoint_test_batch in tqdm(calo_dataloader_test):
+            noise = torch.randn(len(ParticleMomentum_ParticlePoint_test_batch[0]), NOISE_DIM)
+            EnergyDeposit_test_batch = generator_cpu(noise, ParticleMomentum_ParticlePoint_test_batch[0]).detach().numpy()
+            EnergyDeposit_test.append(EnergyDeposit_test_batch)
+        np.savez_compressed(test_data_path_out, 
+                            EnergyDeposit=np.concatenate(EnergyDeposit_test, axis=0).reshape(-1, 30, 30))
+
+        del EnergyDeposit_test
+    del data_test; del ParticleMomentum_test; del ParticlePoint_test; del ParticleMomentum_ParticlePoint_test;
+    del calo_dataset_test; calo_dataloader_test
+
 
     return 0
 
