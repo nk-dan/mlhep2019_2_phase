@@ -28,58 +28,8 @@ def l2_norm(tensor):
     return torch.sqrt(1e-8 + torch.sum(tensor**2))
 
 
-def train_epoch_dis(k_d, energy_b, mom_point_b, d_optimizer):
-
-    for _ in range(k_d):
-        noise = torch.randn(len(energy_b), NOISE_DIM).to(device)
-        energy_gen = generator(noise, mom_point_b)
-
-        if INSTANCE_NOISE:
-            energy_b   = add_instance_noise(energy_b)
-            energy_gen = add_instance_noise(energy_gen)
-            
-        loss = gan_losses.d_loss(discriminator(energy_gen, mom_point_b),
-                                 discriminator(energy_b,   mom_point_b))
-       
-        coef = 0
-        if GRAD_PENALTY:
-            coef = +1.
-        elif ZERO_CENTERED_GRAD_PENALTY:
-            coef = -1.
-
-        loss += coef * gan_losses.calc_gradient_penalty(discriminator,
-                                                        energy_gen.data,
-                                                        mom_point_b,
-                                                        energy_b.data)
-        d_optimizer.zero_grad()
-        loss.backward()
-        d_optimizer.step()
-
-        if LIPSITZ_WEIGHTS:                    
-            [p.data.clamp_(clamp_lower, clamp_upper) for p in discriminator.parameters()]
-
-    return loss.item()
-
-
-def train_epoch_gen(k_g, energy_b, mom_point_b, g_optimizer):
-
-    for _ in range(k_g):
-        noise = torch.randn(len(energy_b), NOISE_DIM).to(device)
-        energy_gen = generator(noise, mom_point_b)
-        
-        if INSTANCE_NOISE:
-            energy_b = add_instance_noise(energy_b)
-            energy_gen = add_instance_noise(energy_gen)
-        
-        loss = gan_losses.g_loss(discriminator(energy_gen, mom_point_b))
-        g_optimizer.zero_grad()
-        loss.backward()
-        g_optimizer.step()
-
-    return loss.item()
-
 def trainer(data_train):
-    
+
     MAX_TRAIN_SIZE = data_train['EnergyDeposit'].shape[0]
     TRAIN_SIZE = 4000 * 3
     TRAIN_IND_ARR = np.random.choice(MAX_TRAIN_SIZE, TRAIN_SIZE)
@@ -164,10 +114,51 @@ def trainer(data_train):
                 
                 
             # Optimize D
-            dis_loss_item = train_epoch_dis(k_d, energy_b, mom_point_b, d_optimizer)
+            for _ in range(k_d):
+                noise = torch.randn(len(energy_b), NOISE_DIM).to(device)
+                energy_gen = generator(noise, mom_point_b)
+
+                if INSTANCE_NOISE:
+                    energy_b   = add_instance_noise(energy_b)
+                    energy_gen = add_instance_noise(energy_gen)
+            
+                loss = gan_losses.d_loss(discriminator(energy_gen, mom_point_b),
+                                 discriminator(energy_b,   mom_point_b))
+       
+                coef = 0
+                if GRAD_PENALTY:
+                    coef = +1.
+                elif ZERO_CENTERED_GRAD_PENALTY:
+                    coef = -1.
+
+                loss += coef * gan_losses.calc_gradient_penalty(discriminator,
+                                                        energy_gen.data,
+                                                        mom_point_b,
+                                                        energy_b.data)
+                d_optimizer.zero_grad()
+                loss.backward()
+                d_optimizer.step()
+
+                if LIPSITZ_WEIGHTS:                    
+                    [p.data.clamp_(clamp_lower, clamp_upper) for p in discriminator.parameters()]
+
+            dis_loss_item = loss.item()
 
             # Optimize G
-            gen_loss_item = train_epoch_gen(k_g, energy_b, mom_point_b, g_optimizer)
+            for _ in range(k_g):
+                noise = torch.randn(len(energy_b), NOISE_DIM).to(device)
+                energy_gen = generator(noise, mom_point_b)
+        
+                if INSTANCE_NOISE:
+                    energy_b = add_instance_noise(energy_b)
+                    energy_gen = add_instance_noise(energy_gen)
+        
+                loss = gan_losses.g_loss(discriminator(energy_gen, mom_point_b))
+                g_optimizer.zero_grad()
+                loss.backward()
+                g_optimizer.step()
+
+            gen_loss_item = loss.item()
     
     return generator.state_dict()
 
