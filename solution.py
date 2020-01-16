@@ -76,7 +76,7 @@ def train_epoch_gen(k_g, energy_b, mom_point_b, g_optimizer):
     return loss.item()
 
 def trainer(data_train):
-
+    MAX_TRAIN_SIZE = data_train['EnergyDeposit'].shape[0]
     TRAIN_SIZE = 4000 * 3
     TRAIN_IND_ARR = np.random.choice(MAX_TRAIN_SIZE, TRAIN_SIZE)
 
