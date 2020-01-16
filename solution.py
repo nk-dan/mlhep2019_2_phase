@@ -12,6 +12,9 @@ import torch.optim as optim
 import torch.utils.data as utils
 import os
 
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+
 def dataset_with_one_particle_type(type_id, EnergyDeposit, ParticleMomentum, ParticlePoint, PDG):
     ind = [i for i, x in enumerate(PDG) if x == type_id]
     
@@ -76,7 +79,7 @@ def train_epoch_gen(k_g, energy_b, mom_point_b, g_optimizer):
     return loss.item()
 
 def trainer(data_train):
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    
     MAX_TRAIN_SIZE = data_train['EnergyDeposit'].shape[0]
     TRAIN_SIZE = 4000 * 3
     TRAIN_IND_ARR = np.random.choice(MAX_TRAIN_SIZE, TRAIN_SIZE)
