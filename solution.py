@@ -12,7 +12,7 @@ import torch.optim as optim
 import torch.utils.data as utils
 import os
 
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
+device = 'cpu'
 MEAN_TRAIN_MOM_POINT = torch.Tensor([-0.08164814, -0.02489864, 20.8446184, -0.01204223,  0.02772552]).to(device)
 STD_TRAIN_MOM_POINT  = torch.Tensor([ 5.4557047,   5.38253167, 24.26102735, 2.69435522,  2.65776869]).to(device)
 GRAD_PENALTY = True
@@ -79,8 +79,8 @@ def trainer(data_train):
     clamp_lower, clamp_upper = -0.01, 0.01
 
     gan_losses = GANLosses(TASK, device)
-    discriminator = ModelD().to(device)
-    generator = ModelGConvTranspose(z_dim=NOISE_DIM).to(device)
+    discriminator = ModelD()
+    generator = ModelGConvTranspose(z_dim=NOISE_DIM)
 
     epoch_num = 30
     lr_dis, lr_gen = 4e-4, 1e-4
