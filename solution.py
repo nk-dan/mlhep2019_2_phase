@@ -10,6 +10,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import torch.utils.data as utils
+from torch.nn.utils import spectral_norm
 import os
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
