@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import sys
 import numpy as np
-from analysis.generator import ModelGConvTranspose, NOISE_DIM
+from analysis.generator import ConditionalBatchNorm2d, ModelGConvTranspose, NOISE_DIM
 from analysis.calc_loss import GANLosses
 from analysis.critic import ModelD
 from tqdm import tqdm
@@ -42,8 +42,8 @@ class ModelG(nn.Module):
         self.fc4 = nn.Linear(512, 20736)
 
         self.conv1 = spectral_norm(nn.ConvTranspose2d(256, 256, 3, stride=2, output_padding=1))
-        #self.bn1 = ConditionalBatchNorm2d(5, 256)
-        self.bn1 = nn.BatchNorm2d(256)
+        self.bn1 = ConditionalBatchNorm2d(5, 256)
+        #self.bn1 = nn.BatchNorm2d(256)
         #self.ln1 = nn.LayerNorm([256, 20, 20])
         self.conv2 = spectral_norm(nn.ConvTranspose2d(256, 128, 3))
         #self.bn2 = ConditionalBatchNorm2d(5, 128)
@@ -54,8 +54,8 @@ class ModelG(nn.Module):
         self.bn3 = nn.BatchNorm2d(64)
         #self.ln3 = nn.LayerNorm([64, 24, 24])
         self.conv4 = spectral_norm(nn.ConvTranspose2d(64, 32, 3))
-        #self.bn4 = ConditionalBatchNorm2d(5, 32)
-        self.bn4 = nn.BatchNorm2d(32)
+        self.bn4 = ConditionalBatchNorm2d(5, 32)
+        #self.bn4 = nn.BatchNorm2d(32)
         #self.ln4 = nn.LayerNorm([32, 26, 26])
         self.conv5 = spectral_norm(nn.ConvTranspose2d(32, 16, 3))
         self.bn5 = nn.BatchNorm2d(16)
@@ -65,22 +65,24 @@ class ModelG(nn.Module):
     def forward(self, z, ParticleMomentum_ParticlePoint):
         mom_point = (ParticleMomentum_ParticlePoint - MEAN_TRAIN_MOM_POINT) / STD_TRAIN_MOM_POINT
         #mom_point = ParticleMomentum_ParticlePoint
-        x = torch.cat([z, mom_point], dim=1)
-        x = F.leaky_relu(self.fc1(z))
-        x = F.leaky_relu(self.fc2(x))
-        x = F.leaky_relu(self.fc3(x))
-        x = F.leaky_relu(self.fc4(x))
+        #x = torch.cat([z, mom_point], dim=1)
+        #x = F.leaky_relu(self.fc1(x))
+        x = F.relu(self.fc1(z))
+        x = F.relu(self.fc2(x))
+        x = F.relu(self.fc3(x))
+        x = F.relu(self.fc4(x))
         EnergyDeposit = x.view(-1, 256, 9, 9)
         
         #print(EnergyDeposit.shape)
+        EnergyDeposit = F.relu(self.bn1(self.conv1(EnergyDeposit), mom_point))
+        #EnergyDeposit = F.leaky_relu(self.bn1(self.conv1(EnergyDeposit)))
         #EnergyDeposit = F.leaky_relu(self.bn2(self.conv2(EnergyDeposit), mom_point))
+        EnergyDeposit = F.relu(self.bn2(self.conv2(EnergyDeposit)))
         #EnergyDeposit = F.leaky_relu(self.bn3(self.conv3(EnergyDeposit), mom_point))
-        #EnergyDeposit = F.leaky_relu(self.bn4(self.conv4(EnergyDeposit), mom_point))
-        EnergyDeposit = F.leaky_relu(self.bn1(self.conv1(EnergyDeposit)))
-        EnergyDeposit = F.leaky_relu(self.bn2(self.conv2(EnergyDeposit)))
-        EnergyDeposit = F.leaky_relu(self.bn3(self.conv3(EnergyDeposit)))
-        EnergyDeposit = F.leaky_relu(self.bn4(self.conv4(EnergyDeposit)))
-        EnergyDeposit = F.leaky_relu(self.bn5(self.conv5(EnergyDeposit)))
+        EnergyDeposit = F.relu(self.bn3(self.conv3(EnergyDeposit)))
+        EnergyDeposit = F.relu(self.bn4(self.conv4(EnergyDeposit), mom_point))
+        #EnergyDeposit = F.leaky_relu(self.bn4(self.conv4(EnergyDeposit)))
+        EnergyDeposit = F.relu(self.bn5(self.conv5(EnergyDeposit)))
         EnergyDeposit = self.conv6(EnergyDeposit)
 
         return EnergyDeposit
@@ -97,7 +99,7 @@ def add_instance_noise(data, std=0.01):
 def trainer(data_train):
 
     MAX_TRAIN_SIZE = data_train['EnergyDeposit'].shape[0]
-    TRAIN_SIZE = 4000 * 3
+    TRAIN_SIZE = 4000 * 4
     TRAIN_IND_ARR = np.random.choice(MAX_TRAIN_SIZE, TRAIN_SIZE)
 
     EnergyDeposit    = data_train['EnergyDeposit'][TRAIN_IND_ARR].reshape(-1, 1, 30, 30)
@@ -142,7 +144,7 @@ def trainer(data_train):
     g_optimizer = optim.Adam(generator.parameters(), betas=(0.0, 0.999), lr=lr_gen)
     d_optimizer = optim.Adam(discriminator.parameters(), betas=(0.0, 0.999), lr=lr_dis)
 
-    k_d, k_g = 3, 1
+    k_d, k_g = 4, 1
 
     dis_epoch_loss,  gen_epoch_loss  = [], []
     predictions_dis, predictions_gen = [], [] 
