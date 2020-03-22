@@ -67,23 +67,23 @@ class ModelG(nn.Module):
         #mom_point = ParticleMomentum_ParticlePoint
         #x = torch.cat([z, mom_point], dim=1)
         #x = F.leaky_relu(self.fc1(x))
-        x = F.relu(self.fc1(z))
-        x = F.relu(self.fc2(x))
-        x = F.relu(self.fc3(x))
-        x = F.relu(self.fc4(x))
+        x = F.leaky_relu(self.fc1(z))
+        x = F.leaky_relu(self.fc2(x))
+        x = F.leaky_relu(self.fc3(x))
+        x = F.leaky_relu(self.fc4(x))
         EnergyDeposit = x.view(-1, 256, 9, 9)
         
         #print(EnergyDeposit.shape)
-        EnergyDeposit = F.relu(self.bn1(self.conv1(EnergyDeposit), mom_point))
+        EnergyDeposit = F.leaky_relu(self.bn1(self.conv1(EnergyDeposit), mom_point))
         #EnergyDeposit = F.leaky_relu(self.bn1(self.conv1(EnergyDeposit)))
         #EnergyDeposit = F.leaky_relu(self.bn2(self.conv2(EnergyDeposit), mom_point))
-        EnergyDeposit = F.relu(self.bn2(self.conv2(EnergyDeposit)))
+        EnergyDeposit = F.leaky_relu(self.bn2(self.conv2(EnergyDeposit)))
         #EnergyDeposit = F.leaky_relu(self.bn3(self.conv3(EnergyDeposit), mom_point))
-        EnergyDeposit = F.relu(self.bn3(self.conv3(EnergyDeposit)))
-        EnergyDeposit = F.relu(self.bn4(self.conv4(EnergyDeposit), mom_point))
+        EnergyDeposit = F.leaky_relu(self.bn3(self.conv3(EnergyDeposit)))
+        EnergyDeposit = F.leaky_relu(self.bn4(self.conv4(EnergyDeposit), mom_point))
         #EnergyDeposit = F.leaky_relu(self.bn4(self.conv4(EnergyDeposit)))
-        EnergyDeposit = F.relu(self.bn5(self.conv5(EnergyDeposit)))
-        EnergyDeposit = self.conv6(EnergyDeposit)
+        EnergyDeposit = F.leaky_relu(self.bn5(self.conv5(EnergyDeposit)))
+        EnergyDeposit = F.relu(self.conv6(EnergyDeposit))
 
         return EnergyDeposit
 
@@ -99,7 +99,7 @@ def add_instance_noise(data, std=0.01):
 def trainer(data_train):
 
     MAX_TRAIN_SIZE = data_train['EnergyDeposit'].shape[0]
-    TRAIN_SIZE = 4000 * 4
+    TRAIN_SIZE = 5000 * 10
     TRAIN_IND_ARR = np.random.choice(MAX_TRAIN_SIZE, TRAIN_SIZE)
 
     EnergyDeposit    = data_train['EnergyDeposit'][TRAIN_IND_ARR].reshape(-1, 1, 30, 30)
@@ -138,7 +138,7 @@ def trainer(data_train):
     discriminator = ModelD().to(device)
     generator = ModelG(z_dim=NOISE_DIM).to(device)
 
-    epoch_num = 30
+    epoch_num = 50
     lr_dis, lr_gen = 4e-4, 1e-4
 
     g_optimizer = optim.Adam(generator.parameters(), betas=(0.0, 0.999), lr=lr_gen)
