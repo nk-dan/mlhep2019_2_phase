@@ -99,7 +99,7 @@ def add_instance_noise(data, std=0.01):
 def trainer(data_train):
 
     MAX_TRAIN_SIZE = data_train['EnergyDeposit'].shape[0]
-    TRAIN_SIZE = 5000 * 10
+    TRAIN_SIZE = 5000 * 5
     TRAIN_IND_ARR = np.random.choice(MAX_TRAIN_SIZE, TRAIN_SIZE)
 
     EnergyDeposit    = data_train['EnergyDeposit'][TRAIN_IND_ARR].reshape(-1, 1, 30, 30)
@@ -138,7 +138,7 @@ def trainer(data_train):
     discriminator = ModelD().to(device)
     generator = ModelG(z_dim=NOISE_DIM).to(device)
 
-    epoch_num = 50
+    epoch_num = 5
     lr_dis, lr_gen = 4e-4, 1e-4
 
     g_optimizer = optim.Adam(generator.parameters(), betas=(0.0, 0.999), lr=lr_gen)
@@ -237,8 +237,8 @@ def main():
     with torch.no_grad():
         EnergyDeposit_val = []
         for ParticleMomentum_ParticlePoint_val_batch in tqdm(calo_dataloader_val):
-            noise = torch.randn(len(ParticleMomentum_ParticlePoint_val_batch[0]), NOISE_DIM)
-            EnergyDeposit_val_batch = generator_cpu(noise, ParticleMomentum_ParticlePoint_val_batch[0]).detach().numpy()
+            noise = torch.randn(len(ParticleMomentum_ParticlePoint_val_batch), NOISE_DIM)
+            EnergyDeposit_val_batch = generator_cpu(noise, ParticleMomentum_ParticlePoint_val_batch).detach().numpy()
             EnergyDeposit_val.append(EnergyDeposit_val_batch)
         np.savez_compressed(val_data_path_out, 
                             EnergyDeposit=np.concatenate(EnergyDeposit_val, axis=0).reshape(-1, 30, 30))
@@ -257,8 +257,8 @@ def main():
     with torch.no_grad():
         EnergyDeposit_test = []
         for ParticleMomentum_ParticlePoint_test_batch in tqdm(calo_dataloader_test):
-            noise = torch.randn(len(ParticleMomentum_ParticlePoint_test_batch[0]), NOISE_DIM)
-            EnergyDeposit_test_batch = generator_cpu(noise, ParticleMomentum_ParticlePoint_test_batch[0]).detach().numpy()
+            noise = torch.randn(len(ParticleMomentum_ParticlePoint_test_batch), NOISE_DIM)
+            EnergyDeposit_test_batch = generator_cpu(noise, ParticleMomentum_ParticlePoint_test_batch).detach().numpy()
             EnergyDeposit_test.append(EnergyDeposit_test_batch)
         np.savez_compressed(test_data_path_out, 
                             EnergyDeposit=np.concatenate(EnergyDeposit_test, axis=0).reshape(-1, 30, 30))
