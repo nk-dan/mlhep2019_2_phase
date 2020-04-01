@@ -224,7 +224,8 @@ def main():
     test_data_path_out = output_dir + '/data_test_prediction.npz'
     
     generator_cpu = ModelGConvTranspose(z_dim=NOISE_DIM)
-    generator_cpu.load_state_dict(trainer(data_train))
+    #generator_cpu.load_state_dict(trainer(data_train))
+    generator_cpu.load_state_dict(os.path.dirname(os.path.abspath(__file__)) + '/gan.pt')
     generator_cpu.eval()
     
     # val
