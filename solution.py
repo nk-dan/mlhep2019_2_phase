@@ -99,7 +99,7 @@ def add_instance_noise(data, std=0.01):
 def trainer(data_train):
 
     MAX_TRAIN_SIZE = data_train['EnergyDeposit'].shape[0]
-    TRAIN_SIZE = 5000 * 10
+    TRAIN_SIZE = 5000 * 5
     TRAIN_IND_ARR = np.random.choice(MAX_TRAIN_SIZE, TRAIN_SIZE)
 
     EnergyDeposit    = data_train['EnergyDeposit'][TRAIN_IND_ARR].reshape(-1, 1, 30, 30)
@@ -138,7 +138,7 @@ def trainer(data_train):
     discriminator = ModelD().to(device)
     generator = ModelG(z_dim=NOISE_DIM).to(device)
 
-    epoch_num = 50
+    epoch_num = 5
     lr_dis, lr_gen = 4e-4, 1e-4
 
     g_optimizer = optim.Adam(generator.parameters(), betas=(0.0, 0.999), lr=lr_gen)
