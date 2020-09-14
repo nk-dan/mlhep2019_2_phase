@@ -225,7 +225,7 @@ def main():
     
     generator_cpu = ModelGConvTranspose(z_dim=NOISE_DIM)
     #generator_cpu.load_state_dict(trainer(data_train))
-    generator_cpu.load_state_dict(torch.load(os.path.dirname(os.path.abspath(__file__)) + '/sagan.pt'))
+    generator_cpu.load_state_dict(torch.load(os.path.dirname(os.path.abspath(__file__)) + '/model_sa_100_full.pt'))
     generator_cpu.eval()
     
     # val
