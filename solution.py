@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import sys
 import numpy as np
-from analysis.generator import ConditionalBatchNorm2d, ModelGConvTranspose, NOISE_DIM
+from analysis.generator import ConditionalBatchNorm2d, Generator_alt, NOISE_DIM
 from analysis.calc_loss import GANLosses
 from analysis.critic import ModelD
 from tqdm import tqdm
